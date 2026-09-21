@@ -40,6 +40,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 4.5rem;
   background: var(--color-void);
   overscroll-behavior-y: none;
 }
@@ -494,8 +495,7 @@ body {
 
 /* Section scroll margin for navbar offset */
 .world-section {
-  scroll-margin-top: 4rem;
-  contain: layout style;
+  scroll-margin-top: 4.5rem;
 }
 
 /* Hide scrollbar on mobile nav */

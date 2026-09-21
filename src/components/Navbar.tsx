@@ -15,10 +15,20 @@ export function Navbar() {
   const tickingRef = useRef(false);
 
   useEffect(() => {
-    sectionRefs.current = navSections.map((s) => ({
-      id: s.id,
-      el: document.getElementById(s.id),
-    }));
+    const refreshSections = () => {
+      sectionRefs.current = navSections.map((s) => ({
+        id: s.id,
+        el: document.getElementById(s.id),
+      }));
+    };
+    refreshSections();
+    window.addEventListener('resize', refreshSections);
+    // Re-resolve after fonts/images shift layout
+    const t = window.setTimeout(refreshSections, 1000);
+    return () => {
+      window.removeEventListener('resize', refreshSections);
+      window.clearTimeout(t);
+    };
   }, []);
 
   useEffect(() => {
@@ -64,8 +74,9 @@ export function Navbar() {
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({ top, behavior: 'smooth' });
+      const NAV_OFFSET = 72;
+      const top = el.getBoundingClientRect().top + window.scrollY - NAV_OFFSET;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     }
     setMobileOpen(false);
   };

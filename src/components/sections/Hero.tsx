@@ -34,7 +34,12 @@ export function HeroSection() {
   }, [introIndex]);
 
   const scrollToSection = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    const el = document.getElementById(id);
+    if (el) {
+      const NAV_OFFSET = 72;
+      const top = el.getBoundingClientRect().top + window.scrollY - NAV_OFFSET;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    }
   };
 
   const photoUrl = files.photo?.url;
