@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X, Upload, RefreshCw, LogOut, Image as ImageIcon, FileText, FileBadge,
@@ -25,21 +25,27 @@ interface UploadSlotProps {
 function UploadSlot({ label, icon, fileType, hasFile, fileName, token, onRefresh }: UploadSlotProps) {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     setMessage('');
-    const result = await ownerUpload(token, file, fileType);
-    setUploading(false);
-    if (result.error) {
-      setMessage(`Error: ${result.error}`);
-    } else {
-      setMessage('Uploaded successfully');
-      await onRefresh();
+    try {
+      const result = await ownerUpload(token, file, fileType);
+      if (result.error) {
+        setMessage(`Error: ${result.error}`);
+      } else {
+        setMessage('Uploaded successfully');
+        await onRefresh();
+      }
+    } catch (err) {
+      // File dialog / network failures in embedded webviews surface here
+      setMessage(`Error: ${err instanceof Error ? err.message : 'Upload failed — try a regular browser tab instead'}`);
     }
-    setTimeout(() => setMessage(''), 3000);
+    setUploading(false);
+    setTimeout(() => setMessage(''), 4000);
     e.target.value = '';
   };
 
@@ -77,13 +83,18 @@ function UploadSlot({ label, icon, fileType, hasFile, fileName, token, onRefresh
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <label className="btn-cinematic cursor-pointer text-xs px-4 py-2.5 group">
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => inputRef.current?.click()}
+          className="btn-cinematic cursor-pointer text-xs px-4 py-2.5 group disabled:opacity-40"
+        >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : hasFile ? <RefreshCw size={14} /> : <Upload size={14} />}
           {hasFile ? 'REPLACE' : 'UPLOAD'}
-          <input type="file" className="hidden" onChange={handleUpload} accept={
-            fileType === 'photo' ? 'image/*' : '.pdf,.doc,.docx'
-          } />
-        </label>
+        </button>
+        <input ref={inputRef} type="file" className="hidden" tabIndex={-1} onChange={handleUpload} accept={
+          fileType === 'photo' ? 'image/*' : '.pdf,.doc,.docx'
+        } />
         {hasFile && (
           <button
             onClick={handleDelete}

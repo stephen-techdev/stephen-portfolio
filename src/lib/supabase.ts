@@ -78,14 +78,23 @@ export async function ownerUpload(
   formData.append('file', file);
   formData.append('fileType', fileType);
 
-  const res = await fetch(`${FUNCTION_URL}/upload`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
-  });
-  const data = await res.json();
-  if (!res.ok) return { error: data.error ?? 'Upload failed' };
-  return { success: true, url: data.url };
+  try {
+    const res = await fetch(`${FUNCTION_URL}/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    let data: { error?: string; url?: string } = {};
+    try {
+      data = await res.json();
+    } catch {
+      return { error: `Upload failed (status ${res.status}). Check Supabase function deployment.` };
+    }
+    if (!res.ok) return { error: data.error ?? 'Upload failed' };
+    return { success: true, url: data.url };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Upload failed. Check connection and .env.' };
+  }
 }
 
 export async function ownerDelete(
