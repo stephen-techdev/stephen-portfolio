@@ -127,12 +127,14 @@ export interface ExperienceItem {
 
 export const experience: ExperienceItem[] = [
   {
-    title: 'FRONTEND DEVELOPMENT INTERN',
-    organization: 'INFO TECH COMPANY',
-    period: '15-DAY INTERNSHIP',
+    title: 'WEB DEVELOPER INTERN',
+    organization: 'ETHIROLI PVT LTD — SALEM, TAMIL NADU',
+    period: 'ONGOING · ON-SITE · 2 MONTHS',
     details: [
-      'Completed practical frontend development training focused on HTML, CSS, and JavaScript.',
-      'Worked on hands-on web page components and practical frontend development.',
+      'Working on live company and client web projects on-site in Salem.',
+      'Building responsive web applications with HTML, CSS, JavaScript, and React.js.',
+      'Working with Python, REST APIs, SQL, and databases plus Git and GitHub collaboration.',
+      'Assisting with testing, debugging, and improving web applications.',
     ],
   },
   {
