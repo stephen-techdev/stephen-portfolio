@@ -177,13 +177,25 @@ export function HeroSection() {
                   transition={{ delay: 1.8, duration: 0.8 }}
                   className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start items-center mt-4"
                 >
-                  <button
-                    onClick={() => setResumeOpen(true)}
-                    className="btn-cinematic group text-sm px-5 py-2.5"
-                  >
-                    <FileText size={15} className="text-[#4a9eff]" />
-                    VIEW RESUME
-                  </button>
+                  {resumeUrl ? (
+                    <a
+                      href={resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-cinematic group text-sm px-5 py-2.5 no-underline"
+                    >
+                      <FileText size={15} className="text-[#4a9eff]" />
+                      VIEW RESUME
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => setResumeOpen(true)}
+                      className="btn-cinematic group text-sm px-5 py-2.5"
+                    >
+                      <FileText size={15} className="text-[#4a9eff]" />
+                      VIEW RESUME
+                    </button>
+                  )}
                   <button
                     onClick={() => setCvOpen(true)}
                     className="btn-cinematic group text-sm px-5 py-2.5"
