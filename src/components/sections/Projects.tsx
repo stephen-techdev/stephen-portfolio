@@ -136,6 +136,7 @@ export function ProjectsSection() {
               onClick={() =>
                 setActiveProject((prev) => (prev === 0 ? projects.length - 1 : prev - 1))
               }
+              aria-label="Previous project"
               className="w-10 h-10 rounded-sm border border-[#0e1220] flex items-center justify-center text-dim hover:text-white hover:border-[#1a2a4a] transition-all"
             >
               <ArrowLeft size={16} />
@@ -147,6 +148,7 @@ export function ProjectsSection() {
               onClick={() =>
                 setActiveProject((prev) => (prev === projects.length - 1 ? 0 : prev + 1))
               }
+              aria-label="Next project"
               className="w-10 h-10 rounded-sm border border-[#0e1220] flex items-center justify-center text-dim hover:text-white hover:border-[#1a2a4a] transition-all"
             >
               <ArrowRight size={16} />
@@ -169,6 +171,8 @@ export function ProjectsSection() {
             <button
               key={project.id}
               onClick={() => setActiveProject(i)}
+              aria-label={`Show ${project.name}`}
+              aria-current={activeProject === i ? 'true' : undefined}
               className="group flex items-center gap-2"
             >
               <div

@@ -1,21 +1,12 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import {
   ownerLogin,
   ownerVerify,
   fetchPortfolioFiles,
+  isSupabaseConfigured,
   type PortfolioFile,
 } from './supabase';
-
-interface OwnerState {
-  isOwner: boolean;
-  token: string | null;
-  files: Record<string, PortfolioFile & { url?: string }>;
-  login: (password: string) => Promise<{ error?: string }>;
-  logout: () => void;
-  refreshFiles: () => Promise<void>;
-}
-
-const OwnerContext = createContext<OwnerState | null>(null);
+import { OwnerContext, type OwnerState } from './owner-store';
 
 const STORAGE_KEY = 'portfolio-owner-token';
 
@@ -23,14 +14,21 @@ export function OwnerProvider({ children }: { children: ReactNode }) {
   const [isOwner, setIsOwner] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [files, setFiles] = useState<Record<string, PortfolioFile & { url?: string }>>({});
+  const [filesError, setFilesError] = useState(false);
 
   const refreshFiles = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setFiles({});
+      setFilesError(true);
+      return;
+    }
     const data = await fetchPortfolioFiles();
-    setFiles(data);
+    setFiles(data ?? {});
+    setFilesError(data === null);
   }, []);
 
   useEffect(() => {
-    refreshFiles();
+    void refreshFiles();
     const stored = sessionStorage.getItem(STORAGE_KEY);
     if (stored) {
       ownerVerify(stored).then((valid) => {
@@ -63,15 +61,7 @@ export function OwnerProvider({ children }: { children: ReactNode }) {
     setIsOwner(false);
   }, []);
 
-  return (
-    <OwnerContext.Provider value={{ isOwner, token, files, login, logout, refreshFiles }}>
-      {children}
-    </OwnerContext.Provider>
-  );
-}
+  const state: OwnerState = { isOwner, token, files, filesError, login, logout, refreshFiles };
 
-export function useOwner() {
-  const ctx = useContext(OwnerContext);
-  if (!ctx) throw new Error('useOwner must be used within OwnerProvider');
-  return ctx;
+  return <OwnerContext.Provider value={state}>{children}</OwnerContext.Provider>;
 }

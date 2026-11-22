@@ -1,11 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
-const FUNCTION_URL = `${supabaseUrl}/functions/v1/portfolio-owner`;
+export const supabase: SupabaseClient | null = isSupabaseConfigured
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
+
+const FUNCTION_URL = isSupabaseConfigured
+  ? `${supabaseUrl.replace(/\/$/, '')}/functions/v1/portfolio-owner`
+  : '';
+
+const CONFIG_ERROR = 'Portfolio backend is not configured. See .env.example for setup.';
 
 export interface PortfolioFile {
   file_type: 'photo' | 'resume' | 'cv';
@@ -15,32 +23,34 @@ export interface PortfolioFile {
   updated_at: string;
 }
 
-export async function fetchPortfolioFiles(): Promise<Record<string, PortfolioFile>> {
-  const { data, error } = await supabase
-    .from('portfolio_files')
-    .select('*');
+export async function fetchPortfolioFiles(): Promise<
+  Record<string, PortfolioFile & { url?: string }> | null
+> {
+  if (!supabase) {
+    console.warn(CONFIG_ERROR);
+    return null;
+  }
 
-  if (error) return {};
+  const { data, error } = await supabase.from('portfolio_files').select('*');
 
-  const map: Record<string, PortfolioFile> = {};
+  if (error) {
+    console.error('[portfolio] Could not load portfolio files:', error.message);
+    return null;
+  }
+
+  const map: Record<string, PortfolioFile & { url?: string }> = {};
   for (const row of data ?? []) {
-    map[row.file_type] = row as PortfolioFile;
+    const file = row as PortfolioFile;
     const { data: urlData } = supabase.storage
       .from('portfolio-files')
-      .getPublicUrl(row.storage_path);
-    (row as PortfolioFile & { url: string }).url = urlData.publicUrl;
+      .getPublicUrl(file.storage_path);
+    map[file.file_type] = { ...file, url: urlData.publicUrl };
   }
   return map;
 }
 
-export function getFileUrl(storagePath: string): string {
-  const { data } = supabase.storage
-    .from('portfolio-files')
-    .getPublicUrl(storagePath);
-  return data.publicUrl;
-}
-
 export async function ownerLogin(password: string): Promise<{ token?: string; error?: string }> {
+  if (!isSupabaseConfigured) return { error: CONFIG_ERROR };
   try {
     const res = await fetch(`${FUNCTION_URL}/auth`, {
       method: 'POST',
@@ -56,6 +66,7 @@ export async function ownerLogin(password: string): Promise<{ token?: string; er
 }
 
 export async function ownerVerify(token: string): Promise<boolean> {
+  if (!isSupabaseConfigured) return false;
   try {
     const res = await fetch(`${FUNCTION_URL}/verify`, {
       method: 'POST',
@@ -74,6 +85,7 @@ export async function ownerUpload(
   file: File,
   fileType: 'photo' | 'resume' | 'cv',
 ): Promise<{ success?: boolean; url?: string; error?: string }> {
+  if (!isSupabaseConfigured) return { error: CONFIG_ERROR };
   const formData = new FormData();
   formData.append('file', file);
   formData.append('fileType', fileType);
@@ -93,7 +105,7 @@ export async function ownerUpload(
     if (!res.ok) return { error: data.error ?? 'Upload failed' };
     return { success: true, url: data.url };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Upload failed. Check connection and .env.' };
+    return { error: err instanceof Error ? err.message : 'Upload failed. Check connection.' };
   }
 }
 
@@ -101,15 +113,20 @@ export async function ownerDelete(
   token: string,
   fileType: 'photo' | 'resume' | 'cv',
 ): Promise<{ success?: boolean; error?: string }> {
-  const res = await fetch(`${FUNCTION_URL}/delete`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ fileType }),
-  });
-  const data = await res.json();
-  if (!res.ok) return { error: data.error ?? 'Delete failed' };
-  return { success: true };
+  if (!isSupabaseConfigured) return { error: CONFIG_ERROR };
+  try {
+    const res = await fetch(`${FUNCTION_URL}/delete`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ fileType }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { error: data.error ?? 'Delete failed' };
+    return { success: true };
+  } catch {
+    return { error: 'Delete failed. Check connection.' };
+  }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { FilmGrain, LoadingScreen } from '@/components/Cinematic';
 import { Navbar } from '@/components/Navbar';
 import { HeroSection } from '@/components/sections/Hero';
@@ -13,15 +13,16 @@ import { ContactSection } from '@/components/sections/Contact';
 import { FinalScene } from '@/components/sections/FinalScene';
 import { EditButton } from '@/components/EditButton';
 import { OwnerProvider } from '@/lib/owner-context';
-import { useVisibilityPause } from '@/lib/use-in-view';
+import { useVisibilityPause } from '@/lib/use-visibility-pause';
 
 function App() {
   const [loading, setLoading] = useState(true);
+  const handleLoadingComplete = useCallback(() => setLoading(false), []);
   useVisibilityPause();
 
   return (
     <OwnerProvider>
-      {loading && <LoadingScreen onComplete={() => setLoading(false)} />}
+      {loading && <LoadingScreen onComplete={handleLoadingComplete} />}
 
       <FilmGrain />
       <div className="world-fog" />

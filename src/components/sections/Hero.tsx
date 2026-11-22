@@ -6,7 +6,7 @@ import { CinematicBackground } from '@/components/CinematicBackground';
 import { Particles, Spotlight } from '@/components/Cinematic';
 import { DocumentViewer } from '@/components/DocumentViewer';
 import { personal, heroIntro } from '@/data/portfolio';
-import { useOwner } from '@/lib/owner-context';
+import { useOwner } from '@/lib/owner-store';
 
 const introVariants = {
   hidden: { opacity: 0, y: 30, filter: 'blur(15px)' },
@@ -19,7 +19,7 @@ export function HeroSection() {
   const [showName, setShowName] = useState(false);
   const [resumeOpen, setResumeOpen] = useState(false);
   const [cvOpen, setCvOpen] = useState(false);
-  const { files, isOwner } = useOwner();
+  const { files, filesError, isOwner } = useOwner();
 
   useEffect(() => {
     if (introIndex < heroIntro.length) {
@@ -191,6 +191,11 @@ export function HeroSection() {
                     <FileBadge size={15} className="text-[#4a9eff]" />
                     VIEW CV
                   </button>
+                  {filesError && (
+                    <p role="status" className="text-[10px] font-mono-cine tracking-wider text-dim">
+                      FILE CATALOG UNAVAILABLE — CHECK BACK LATER
+                    </p>
+                  )}
                 </motion.div>
               </motion.div>
             )}

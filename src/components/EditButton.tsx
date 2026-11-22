@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings, Lock, X, Loader2, Eye, EyeOff } from 'lucide-react';
-import { useOwner } from '@/lib/owner-context';
+import { useOwner } from '@/lib/owner-store';
+import { useModalFocus } from '@/lib/use-modal-focus';
 import { OwnerPanel } from './OwnerPanel';
 
 export function EditButton() {
@@ -13,12 +14,22 @@ export function EditButton() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const loginOpen = showLogin && !isOwner;
+  const closeLogin = useCallback(() => setShowLogin(false), []);
+  const dialogRef = useModalFocus<HTMLFormElement>(loginOpen, closeLogin, inputRef);
 
   useEffect(() => {
     if (isOwner) {
       setShowLogin(false);
     }
   }, [isOwner]);
+
+  useEffect(() => {
+    if (!loginOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous; };
+  }, [loginOpen]);
 
   const handleEditClick = () => {
     if (isOwner) {
@@ -68,34 +79,40 @@ export function EditButton() {
 
       {/* Login modal */}
       <AnimatePresence>
-        {showLogin && !isOwner && (
+        {loginOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[9700] flex items-center justify-center p-3 sm:p-4"
-            onClick={() => setShowLogin(false)}
+            onClick={closeLogin}
           >
             <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
 
             <motion.form
+              ref={dialogRef}
               initial={{ scale: 0.92, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.92, y: 20 }}
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
               onSubmit={handleLogin}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="owner-login-title"
+              tabIndex={-1}
               className="relative z-10 w-full max-w-sm glass-panel p-6 sm:p-8 space-y-6"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Lock size={18} className="text-[#4a9eff]" />
-                  <span className="font-cinematic text-lg text-white tracking-wide">OWNER ACCESS</span>
+                  <span id="owner-login-title" className="font-cinematic text-lg text-white tracking-wide">OWNER ACCESS</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowLogin(false)}
+                  onClick={closeLogin}
+                  aria-label="Close login dialog"
                   className="w-8 h-8 rounded-sm border border-[#0e1220] flex items-center justify-center text-dim hover:text-white transition-all"
                 >
                   <X size={16} />

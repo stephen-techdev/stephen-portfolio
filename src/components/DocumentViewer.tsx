@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, FileText, Eye, ExternalLink, AlertCircle, Loader2 } from 'lucide-react';
+import { useModalFocus } from '@/lib/use-modal-focus';
 
 interface DocumentViewerProps {
   open: boolean;
@@ -24,51 +25,31 @@ export function DocumentViewer({
   const [loadingState, setLoadingState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const blobRef = useRef<string | null>(null);
+  const requestIdRef = useRef(0);
+  const dialogRef = useModalFocus(open, onClose);
 
-  // Lock body scroll while modal is open
-  useEffect(() => {
-    if (!open) return;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [open, onClose]);
-
-  // Fetch PDF as blob when modal opens — bypasses X-Frame-Options
-  useEffect(() => {
-    if (!open || !fileUrl) {
-      setLoadingState('idle');
-      return;
-    }
-
-    setLoadingState('loading');
-
-    // Revoke any previous blob URL
+  const releaseBlob = useCallback(() => {
     if (blobRef.current) {
       URL.revokeObjectURL(blobRef.current);
       blobRef.current = null;
       setBlobUrl(null);
     }
+  }, []);
 
-    let cancelled = false;
+  const load = useCallback((url: string) => {
+    const requestId = ++requestIdRef.current;
+    releaseBlob();
+    setLoadingState('loading');
 
-    fetch(fileUrl)
+    fetch(url)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.blob();
       })
       .then((blob) => {
-        if (cancelled) return;
-        if (blob.type && !blob.type.includes('pdf') && blob.size < 100) {
-          throw new Error('Not a valid PDF');
+        if (requestId !== requestIdRef.current) return;
+        if (blob.size === 0 || (blob.type && !blob.type.includes('pdf') && blob.size < 100)) {
+          throw new Error('Not a valid document');
         }
         const url = URL.createObjectURL(blob);
         blobRef.current = url;
@@ -76,29 +57,39 @@ export function DocumentViewer({
         setLoadingState('ready');
       })
       .catch(() => {
-        if (cancelled) return;
-        setLoadingState('error');
+        if (requestId === requestIdRef.current) setLoadingState('error');
       });
+  }, [releaseBlob]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [open, fileUrl]);
-
-  // Cleanup blob URL on unmount or close
+  // Lock body scroll while modal is open. Escape is handled by useModalFocus.
   useEffect(() => {
-    if (!open && blobRef.current) {
-      URL.revokeObjectURL(blobRef.current);
-      blobRef.current = null;
-      setBlobUrl(null);
-    }
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      requestIdRef.current += 1;
+    };
   }, [open]);
 
+  // Fetch the document as a blob when the modal opens — bypasses X-Frame-Options.
   useEffect(() => {
-    return () => {
-      if (blobRef.current) URL.revokeObjectURL(blobRef.current);
-    };
-  }, []);
+    if (!open || !fileUrl) {
+      requestIdRef.current += 1;
+      releaseBlob();
+      setLoadingState('idle');
+      return;
+    }
+    load(fileUrl);
+    return () => { requestIdRef.current += 1; };
+  }, [open, fileUrl, load, releaseBlob]);
+
+  // Cleanup blob URL on unmount or close.
+  useEffect(() => {
+    if (!open) releaseBlob();
+  }, [open, releaseBlob]);
+
+  useEffect(() => () => releaseBlob(), [releaseBlob]);
 
   const handleDownload = async () => {
     if (!fileUrl) return;
@@ -123,31 +114,11 @@ export function DocumentViewer({
   };
 
   const handleOpenInNewTab = () => {
-    if (fileUrl) window.open(fileUrl, '_blank');
+    if (fileUrl) window.open(fileUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleRetry = () => {
-    if (blobRef.current) {
-      URL.revokeObjectURL(blobRef.current);
-      blobRef.current = null;
-      setBlobUrl(null);
-    }
-    setLoadingState('loading');
-
-    fetch(fileUrl!)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.blob();
-      })
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
-        blobRef.current = url;
-        setBlobUrl(url);
-        setLoadingState('ready');
-      })
-      .catch(() => {
-        setLoadingState('error');
-      });
+    if (fileUrl) load(fileUrl);
   };
 
   return createPortal(
@@ -164,10 +135,15 @@ export function DocumentViewer({
           <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
 
           <motion.div
+            ref={dialogRef}
             initial={{ scale: 0.92, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.92, y: 20 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="document-viewer-title"
+            tabIndex={-1}
             className="relative z-10 w-full max-w-4xl h-[80svh] md:h-[85vh] glass-panel flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
@@ -175,10 +151,11 @@ export function DocumentViewer({
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 md:py-4 border-b border-[#0e1220]">
               <div className="flex items-center gap-3">
                 <FileText size={20} className="text-[#4a9eff]" />
-                <span className="font-cinematic text-xl text-white tracking-wide">{title}</span>
+                <span id="document-viewer-title" className="font-cinematic text-xl text-white tracking-wide">{title}</span>
               </div>
               <button
                 onClick={onClose}
+                aria-label="Close document viewer"
                 className="w-9 h-9 rounded-sm border border-[#0e1220] flex items-center justify-center text-dim hover:text-white hover:border-[#1a2a4a] transition-all"
               >
                 <X size={18} />
@@ -245,6 +222,8 @@ export function DocumentViewer({
                 <iframe
                   src={blobUrl ?? undefined}
                   title={title}
+                  sandbox="allow-scripts allow-same-origin"
+                  referrerPolicy="no-referrer"
                   className="w-full h-full border-0"
                   style={{ minHeight: '100%' }}
                 />

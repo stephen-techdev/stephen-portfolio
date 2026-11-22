@@ -118,7 +118,8 @@ export function LoadingScreen({ onComplete }: { onComplete: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const timer = setTimeout(onComplete, 2200);
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const timer = setTimeout(onComplete, reducedMotion ? 0 : 700);
     return () => clearTimeout(timer);
   }, [onComplete]);
 

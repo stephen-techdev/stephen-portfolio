@@ -4,7 +4,8 @@ import {
   X, Upload, RefreshCw, LogOut, Image as ImageIcon, FileText, FileBadge,
   Check, Loader2, ShieldCheck,
 } from 'lucide-react';
-import { useOwner } from '@/lib/owner-context';
+import { useOwner } from '@/lib/owner-store';
+import { useModalFocus } from '@/lib/use-modal-focus';
 import { ownerUpload, ownerDelete } from '@/lib/supabase';
 
 interface OwnerPanelProps {
@@ -121,11 +122,13 @@ function UploadSlot({ label, icon, fileType, hasFile, fileName, token, onRefresh
 
 export function OwnerPanel({ open, onClose }: OwnerPanelProps) {
   const { token, files, logout, refreshFiles } = useOwner();
+  const dialogRef = useModalFocus(open, onClose);
 
   useEffect(() => {
-    if (open) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
-    return () => { document.body.style.overflow = ''; };
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous; };
   }, [open]);
 
   const handleLogout = () => {
@@ -147,10 +150,15 @@ export function OwnerPanel({ open, onClose }: OwnerPanelProps) {
           <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
 
           <motion.div
+            ref={dialogRef}
             initial={{ scale: 0.92, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.92, y: 20 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="owner-panel-title"
+            tabIndex={-1}
             className="relative z-10 w-full max-w-lg glass-panel flex flex-col overflow-hidden max-h-[85svh] md:max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
@@ -158,10 +166,11 @@ export function OwnerPanel({ open, onClose }: OwnerPanelProps) {
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 md:py-4 border-b border-[#0e1220]">
               <div className="flex items-center gap-2">
                 <ShieldCheck size={18} className="text-[#4a9eff]" />
-                <span className="font-cinematic text-xl text-white tracking-wide">OWNER ACCESS</span>
+                <span id="owner-panel-title" className="font-cinematic text-xl text-white tracking-wide">OWNER ACCESS</span>
               </div>
               <button
                 onClick={onClose}
+                aria-label="Close owner panel"
                 className="w-9 h-9 rounded-sm border border-[#0e1220] flex items-center justify-center text-dim hover:text-white hover:border-[#1a2a4a] transition-all"
               >
                 <X size={18} />

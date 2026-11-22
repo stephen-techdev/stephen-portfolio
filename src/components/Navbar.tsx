@@ -120,6 +120,9 @@ export function Navbar() {
           <button
             className="md:hidden text-silver p-2"
             onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-nav-menu"
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -129,6 +132,7 @@ export function Navbar() {
         <AnimatePresence>
           {mobileOpen && (
             <motion.div
+              id="mobile-nav-menu"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -161,6 +165,7 @@ export function Navbar() {
           <button
             key={section.id}
             onClick={() => scrollToSection(section.id)}
+            aria-label={`Go to ${section.label.toLowerCase()} section`}
             className="group flex items-center gap-3 justify-end"
           >
             <span

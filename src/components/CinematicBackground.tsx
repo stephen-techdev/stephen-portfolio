@@ -35,13 +35,15 @@ export const CinematicBackground = memo(function CinematicBackground({
   const y = useTransform(scrollYProgress, [0, 1], ['-3%', '3%']);
 
   const rainDrops = useMemo(() => {
-    const count = window.innerWidth < 768 ? 12 : 25;
+    const width = typeof window === 'undefined' ? 1024 : window.innerWidth;
+    const isMobile = width < 768;
+    const count = isMobile ? 12 : 25;
     return Array.from({ length: count }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       duration: Math.random() * 0.8 + 1.2,
       delay: Math.random() * 3,
-      height: window.innerWidth < 768 ? 35 : 50,
+      height: isMobile ? 35 : 50,
     }));
   }, []);
 

@@ -1,2 +1,5 @@
+# Public visitors must be able to call /auth and /verify without a Supabase JWT.
+# Authorization for file operations is handled inside the function by the HMAC
+# owner token, so verify_jwt stays false. Do not remove the in-function checks.
 [functions.portfolio-owner]
 verify_jwt = false
