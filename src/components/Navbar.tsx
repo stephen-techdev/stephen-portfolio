@@ -11,22 +11,26 @@ export function Navbar() {
   // Refs to avoid recreating the scroll listener on every state change
   const scrolledRef = useRef(false);
   const activeRef = useRef('hero');
-  const sectionRefs = useRef<{ id: string; el: HTMLElement | null }[]>([]);
+  const sectionTops = useRef<{ id: string; top: number }[]>([]);
   const tickingRef = useRef(false);
 
   useEffect(() => {
     const refreshSections = () => {
-      sectionRefs.current = navSections.map((s) => ({
-        id: s.id,
-        el: document.getElementById(s.id),
-      }));
+      sectionTops.current = navSections
+        .map((s) => {
+          const el = document.getElementById(s.id);
+          return el ? { id: s.id, top: el.getBoundingClientRect().top + window.scrollY } : null;
+        })
+        .filter((entry): entry is { id: string; top: number } => entry !== null);
     };
     refreshSections();
     window.addEventListener('resize', refreshSections);
+    window.addEventListener('load', refreshSections);
     // Re-resolve after fonts/images shift layout
     const t = window.setTimeout(refreshSections, 1000);
     return () => {
       window.removeEventListener('resize', refreshSections);
+      window.removeEventListener('load', refreshSections);
       window.clearTimeout(t);
     };
   }, []);
@@ -46,12 +50,11 @@ export function Navbar() {
         }
 
         const scrollPos = scrollTop + window.innerHeight / 2;
-        let newActive = activeRef.current;
+        let newActive = 'hero';
 
-        for (let i = sectionRefs.current.length - 1; i >= 0; i--) {
-          const entry = sectionRefs.current[i];
-          if (entry.el && entry.el.offsetTop <= scrollPos) {
-            newActive = entry.id;
+        for (let i = sectionTops.current.length - 1; i >= 0; i--) {
+          if (sectionTops.current[i].top <= scrollPos) {
+            newActive = sectionTops.current[i].id;
             break;
           }
         }
@@ -89,7 +92,7 @@ export function Navbar() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 2.3, duration: 0.6 }}
         className={`fixed top-0 left-0 right-0 z-[9000] transition-all duration-500 ${
-          scrolled ? 'bg-[#04060c]/80 backdrop-blur-md border-b border-[#0a0e1a]' : ''
+          scrolled ? 'bg-[#04060c]/95 md:bg-[#04060c]/80 md:backdrop-blur-md border-b border-[#0a0e1a]' : ''
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 md:py-4 flex items-center justify-end md:justify-center">
@@ -133,11 +136,11 @@ export function Navbar() {
           {mobileOpen && (
             <motion.div
               id="mobile-nav-menu"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="md:hidden overflow-hidden bg-[#04060c]/95 backdrop-blur-lg border-t border-[#0a0e1a]"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden bg-[#04060c]/95 border-t border-[#0a0e1a]"
             >
               <div className="flex flex-col py-4 px-6 gap-1">
                 {navSections.map((section) => (

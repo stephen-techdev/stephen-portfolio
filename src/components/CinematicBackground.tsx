@@ -1,5 +1,4 @@
 import { useRef, memo, useState, useEffect, useMemo } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
 
 interface CinematicBackgroundProps {
   className?: string;
@@ -7,8 +6,9 @@ interface CinematicBackgroundProps {
 
 /**
  * Thunder/supernatural atmosphere: storm clouds, fog, rain, drifting mist.
- * All effects are CSS-only with minimal DOM nodes. Parallax is only
- * mounted when the section is near the viewport.
+ * All effects are CSS-only with minimal DOM nodes. The expensive layers are
+ * only mounted when the section is near the viewport, and nothing is tied to
+ * the scroll position so scrolling stays smooth on mobile and laptops.
  */
 export const CinematicBackground = memo(function CinematicBackground({
   className = '',
@@ -27,13 +27,6 @@ export const CinematicBackground = memo(function CinematicBackground({
     return () => observer.disconnect();
   }, []);
 
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ['start end', 'end start'],
-  });
-
-  const y = useTransform(scrollYProgress, [0, 1], ['-3%', '3%']);
-
   const rainDrops = useMemo(() => {
     const width = typeof window === 'undefined' ? 1024 : window.innerWidth;
     const isMobile = width < 768;
@@ -49,9 +42,9 @@ export const CinematicBackground = memo(function CinematicBackground({
 
   return (
     <div ref={ref} className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`}>
-      {/* Slow drifting storm clouds — parallax */}
+      {/* Slow drifting storm clouds */}
       {near && (
-        <motion.div style={{ y }} className="absolute inset-0">
+        <div className="absolute inset-0">
           <div
             className="cloud-layer"
             style={{
@@ -67,7 +60,7 @@ export const CinematicBackground = memo(function CinematicBackground({
               background: 'radial-gradient(ellipse 50% 25% at 70% 50%, rgba(20, 16, 18, 0.12) 0%, transparent 60%)',
             }}
           />
-        </motion.div>
+        </div>
       )}
 
       {/* Rain — CSS-animated, lightweight */}

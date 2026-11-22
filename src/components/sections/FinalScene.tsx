@@ -53,9 +53,9 @@ export function FinalScene() {
           {sequenceIndex < finalSequence.length && (
             <motion.div
               key={sequenceIndex}
-              initial={{ opacity: 0, y: 30, filter: 'blur(20px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, y: -30, filter: 'blur(20px)' }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
               transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
             >
               <p
@@ -80,8 +80,8 @@ export function FinalScene() {
           >
             {/* Closing quote */}
             <motion.div
-              initial={{ opacity: 0, filter: 'blur(15px)' }}
-              animate={{ opacity: 1, filter: 'blur(0px)' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ delay: 0.3, duration: 1.2 }}
               className="space-y-2"
             >

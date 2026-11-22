@@ -39,10 +39,8 @@
 }
 
 html {
-  scroll-behavior: smooth;
   scroll-padding-top: 4.5rem;
   background: var(--color-void);
-  overscroll-behavior-y: none;
 }
 
 body {
@@ -688,4 +686,21 @@ body {
   .cinematic-vignette { background: radial-gradient(ellipse at center, transparent 15%, rgba(0, 0, 0, 0.7) 100%); }
   .storm-rain span { height: 35px; opacity: 0.15; }
   .lightning-bolt { width: 2px; }
+
+  /* Backdrop blur over scrolling content is expensive on phones — use a
+     solid translucent surface instead so scroll frames stay smooth. */
+  .glass-panel {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgba(8, 10, 18, 0.92);
+  }
+
+  /* Large animated blur glows force costly repaints while scrolling. */
+  .crimson-pulse,
+  .storm-glow,
+  .fog-layer,
+  .particle {
+    animation: none !important;
+    filter: none !important;
+  }
 }

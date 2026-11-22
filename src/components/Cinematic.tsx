@@ -204,7 +204,7 @@ export const Particles = memo(function Particles({ count = 8, className = '' }: 
       {particles.map((p) => (
         <div
           key={p.id}
-          className="absolute rounded-full"
+          className="particle absolute rounded-full"
           style={{
             left: `${p.left}%`,
             top: `${p.top}%`,
@@ -216,7 +216,6 @@ export const Particles = memo(function Particles({ count = 8, className = '' }: 
               ? '0 0 3px rgba(74, 158, 255, 0.2)'
               : '0 0 2px rgba(26, 42, 74, 0.15)',
             animation: `noir-pulse ${p.duration}s ease-in-out ${p.delay}s infinite`,
-            willChange: 'transform, opacity',
           }}
         />
       ))}

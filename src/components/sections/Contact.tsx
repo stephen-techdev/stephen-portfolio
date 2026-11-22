@@ -32,8 +32,8 @@ export function ContactSection() {
         <SectionLabel title="CONTACT" />
 
         <motion.h2
-          initial={{ opacity: 0, y: 30, filter: 'blur(20px)' }}
-          whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 1 }}
           className="font-cinematic text-3xl sm:text-5xl md:text-7xl lg:text-8xl text-white text-glow tracking-wide mb-6"

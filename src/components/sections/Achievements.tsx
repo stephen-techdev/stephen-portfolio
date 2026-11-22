@@ -109,8 +109,8 @@ export function AchievementsSection() {
           {disciplineQuote.map((line, i) => (
             <motion.p
               key={i}
-              initial={{ opacity: 0, filter: 'blur(15px)' }}
-              whileInView={{ opacity: 1, filter: 'blur(0px)' }}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.6 + i * 0.3, duration: 1 }}
               className="font-cinematic discipline-quote text-white text-glow tracking-wide"

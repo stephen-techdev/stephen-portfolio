@@ -9,9 +9,9 @@ import { personal, heroIntro } from '@/data/portfolio';
 import { useOwner } from '@/lib/owner-store';
 
 const introVariants = {
-  hidden: { opacity: 0, y: 30, filter: 'blur(15px)' },
-  visible: { opacity: 1, y: 0, filter: 'blur(0px)' },
-  exit: { opacity: 0, y: -30, filter: 'blur(15px)' },
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -30 },
 };
 
 export function HeroSection() {
@@ -104,8 +104,8 @@ export function HeroSection() {
                 transition={{ duration: 1 }}
               >
                 <motion.h1
-                  initial={{ opacity: 0, scale: 1.1, filter: 'blur(20px)' }}
-                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                  initial={{ opacity: 0, scale: 1.1 }}
+                  animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.3, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
                   className="font-cinematic hero-name text-white text-glow tracking-wider mb-6"
                 >
@@ -196,13 +196,25 @@ export function HeroSection() {
                       VIEW RESUME
                     </button>
                   )}
-                  <button
-                    onClick={() => setCvOpen(true)}
-                    className="btn-cinematic group text-sm px-5 py-2.5"
-                  >
-                    <FileBadge size={15} className="text-[#4a9eff]" />
-                    VIEW CV
-                  </button>
+                  {cvUrl ? (
+                    <a
+                      href={cvUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-cinematic group text-sm px-5 py-2.5 no-underline"
+                    >
+                      <FileBadge size={15} className="text-[#4a9eff]" />
+                      VIEW CV
+                    </a>
+                  ) : (
+                    <button
+                      onClick={() => setCvOpen(true)}
+                      className="btn-cinematic group text-sm px-5 py-2.5"
+                    >
+                      <FileBadge size={15} className="text-[#4a9eff]" />
+                      VIEW CV
+                    </button>
+                  )}
                   {filesError && (
                     <p role="status" className="text-[10px] font-mono-cine tracking-wider text-dim">
                       FILE CATALOG UNAVAILABLE — CHECK BACK LATER
