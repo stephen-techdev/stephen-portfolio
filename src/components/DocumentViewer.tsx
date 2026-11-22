@@ -129,7 +129,7 @@ export function DocumentViewer({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="fixed inset-0 z-[9500] flex items-center justify-center p-3 sm:p-4 md:p-8"
+          className="fixed inset-0 z-[9500] flex items-center justify-center p-0 sm:p-4 md:p-8"
           onClick={onClose}
         >
           <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
@@ -144,7 +144,7 @@ export function DocumentViewer({
             aria-modal="true"
             aria-labelledby="document-viewer-title"
             tabIndex={-1}
-            className="relative z-10 w-full max-w-4xl h-[80svh] md:h-[85vh] glass-panel flex flex-col overflow-hidden"
+            className="relative z-10 w-full max-w-4xl h-[100dvh] sm:h-[80svh] md:h-[85vh] glass-panel flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
