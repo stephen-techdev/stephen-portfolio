@@ -44,7 +44,9 @@ export async function fetchPortfolioFiles(): Promise<
     const { data: urlData } = supabase.storage
       .from('portfolio-files')
       .getPublicUrl(file.storage_path);
-    map[file.file_type] = { ...file, url: urlData.publicUrl };
+    // Bust the CDN/browser cache when an owner replaces a file at the same path.
+    const version = encodeURIComponent(file.updated_at);
+    map[file.file_type] = { ...file, url: `${urlData.publicUrl}?v=${version}` };
   }
   return map;
 }
